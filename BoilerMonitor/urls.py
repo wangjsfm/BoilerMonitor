@@ -20,7 +20,7 @@ from src.TemperatureMonitor.Service.MainService import StartThread
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    url(r'getapi/', include('RestApi.urls')),
+    url(r'api/', include('RestApi.urls')),
 ]
 
 StartThread()

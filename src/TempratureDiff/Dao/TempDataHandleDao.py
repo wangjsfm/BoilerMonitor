@@ -56,7 +56,7 @@ def GetMaxMinData(areaOpcData):
 
 def RemoveCatch(region,unit):
     """
-        报警结束，删除缓存数据
+        报警结束，持久化缓存数据
     :param region:
     """
 
@@ -86,16 +86,40 @@ def RemoveCatch(region,unit):
             tiemDiff = (endDate-beginDate).seconds
         )
         persistence.save() # 保存到数据库
-        cache.delete(area)  # 报警结束 删除缓存
+        # cache.delete(area)  # 报警结束 删除缓存
+
+def updataCatch(maxTag,minTag,diffValue,redisData):
+    """
+    更新缓存数据，格式化
+    :param maxTag:
+    :param minTag:
+    :param diffValue:
+    :param redisData:
+    """
+    redisData['maxTageValue'] = maxTag[0]
+    redisData['maxTageName'] = maxTag[1]
+    redisData['maxTageDesc'] = maxTag[2]
+    redisData['minTageValue'] = minTag[0]
+    redisData['minTageName'] = minTag[1]
+    redisData['minTageDesc'] = minTag[2]
+    redisData['diffValue'] = diffValue
+
+    return redisData
 
 
-def AlermDataCatchDao(maxTag,minTag,diffValue,region,unit):
+
+
+
+
+
+def AlermDataCatchDao(maxTag,minTag,diffValue,region,unit,alermValue):
     """
         温差超限 存入redis
     :param maxTag:
     :param minTag:
     :param diffValue: 偏差值
     :param region: 数据所属区域
+    :param alermValue: 报警阀值
     """
     area = region+unit
     get_diffValue_catch = cache.get(area)
@@ -103,34 +127,83 @@ def AlermDataCatchDao(maxTag,minTag,diffValue,region,unit):
     minValue = minTag[0]#最小值
 
 
-    #新建一条缓存信息
-    if get_diffValue_catch is None :
-        a=cache.set(area,{
-            'maxTageName':maxTag[1],
+    if get_diffValue_catch is None:
+        cache.set(area, {  # 新建一条缓存信息
+            'maxTageName': maxTag[1],
             'maxTageDesc': maxTag[2],
-            'maxTageValue':maxValue,
+            'maxTageValue': maxValue,
             'minTageName': minTag[1],
             'minTageDesc': minTag[2],
-            'minTageValue':minValue,
+            'minTageValue': minValue,
             'beginDate': datetime.now(),
-            'diffValue':diffValue, #偏差值
+            'diffValue': diffValue,  # 偏差值
+            'state': 0, #报警状态 1报警  0停止
         },
-         timeout=None,  # 永不超时
-        )
+                  timeout=None,  # 永不超时
+                  )
+
+    else: #redis有缓存
 
 
-    #更新缓存信息
-    else:
+        if (diffValue < alermValue) & (get_diffValue_catch['state'] == 1): #上一刻报警，此刻没报警，将数据保存到数据库
+            # 持久化
+            RemoveCatch(region, unit, )
+            get_diffValue_catch['state'] = 0
 
-        #若传入偏差值大于 redis缓存中的值，则更新缓存
-        if diffValue > get_diffValue_catch['diffValue'] :
-            get_diffValue_catch['diffValue'] = diffValue
-        elif maxValue > get_diffValue_catch['maxTageValue'] :
-            get_diffValue_catch['maxTageValue'] = maxValue
-        elif minValue >get_diffValue_catch['minTageValue'] :
-            get_diffValue_catch['minTageValue'] = minValue
+        # 更新缓存信息
+        elif diffValue >= alermValue :
+            get_diffValue_catch['state'] = 1
+            #更新数据
+            get_diffValue_catch =  updataCatch(maxTag,minTag,diffValue,get_diffValue_catch)
+        elif diffValue < alermValue :
+            get_diffValue_catch['state'] = 0
+            # 更新数据
+            get_diffValue_catch = updataCatch(maxTag, minTag, diffValue, get_diffValue_catch)
 
-        a=cache.set(area, get_diffValue_catch, timeout=None)  # 更新数据到redis
+            #若传入偏差值大于 redis缓存中的值，则更新缓存
+        # # if diffValue > get_diffValue_catch['diffValue'] :
+        # #     get_diffValue_catch['diffValue'] = diffValue
+        # if maxValue > get_diffValue_catch['maxTageValue'] :
+        #     get_diffValue_catch['maxTageValue'] = maxValue
+        # if minValue >get_diffValue_catch['minTageValue'] :
+        #     get_diffValue_catch['minTageValue'] = minValue
+
+        cache.set(area, get_diffValue_catch, timeout=None)  # 更新数据到redis
+
+
+    # #新建一条缓存信息
+    # if get_diffValue_catch is None :
+    #     cache.set(area,{
+    #         'maxTageName':maxTag[1],
+    #         'maxTageDesc': maxTag[2],
+    #         'maxTageValue':maxValue,
+    #         'minTageName': minTag[1],
+    #         'minTageDesc': minTag[2],
+    #         'minTageValue':minValue,
+    #         'beginDate': datetime.now(),
+    #         'diffValue':diffValue, #偏差值
+    #         'state':1,
+    #     },
+    #      timeout=None,  # 永不超时
+    #     )
+    #
+    #
+    # #更新缓存信息
+    # else:
+    #
+    #     #若传入偏差值大于 redis缓存中的值，则更新缓存
+    #     if diffValue > get_diffValue_catch['diffValue'] :
+    #         get_diffValue_catch['diffValue'] = diffValue
+    #     elif maxValue > get_diffValue_catch['maxTageValue'] :
+    #         get_diffValue_catch['maxTageValue'] = maxValue
+    #     elif minValue >get_diffValue_catch['minTageValue'] :
+    #         get_diffValue_catch['minTageValue'] = minValue
+    #
+    #     cache.set(area, get_diffValue_catch, timeout=None)  # 更新数据到redis
+    #
+
+
+
 
 
 
@@ -144,19 +217,23 @@ def OutOfGaugeHandleDao(maxTag,minTag,alermValue,partitionArea,unit):
     :param partitionArea:数据所属区域
     :param unit: 机组
     """
-    diffValue = maxTag[0]-minTag[0] #最大值-最小值  获得温差
+    area = partitionArea + unit
+    diffValue = round((maxTag[0]-minTag[0]),2) #最大值-最小值  获得温差
 
-    # 区域最大，最小差值大于定值，将数据更新（新建）至redis
-    if  diffValue >  alermValue:
-        #存入redis缓存
-        AlermDataCatchDao(maxTag,minTag,alermValue,partitionArea,unit)
-        #生成报警信息
-        alermTextContent = unit+str(maxTag[2])+','+str(minTag[2])+',偏差'+str(diffValue)+'度'
+    AlermDataCatchDao(maxTag,minTag,diffValue,partitionArea,unit,alermValue)
 
-    #无报警，删除对于区域缓存数据，并将缓存数据存入数据库
-    else:
-        #删除缓存及持久化
-        RemoveCatch(partitionArea,unit,)
+    get_diffValue_catch = cache.get(area)
+
+    dataState = get_diffValue_catch['state']#获取数据状态
+
+    if  diffValue < alermValue & get_diffValue_catch['state'] == dataState :#无报警，删除对于区域缓存数据，并将缓存数据存入数据库
+            # 删除缓存及持久化
+        RemoveCatch(partitionArea, unit, )
+    elif diffValue >= alermValue:
+        # 生成报警信息
+        alermTextContent = unit + str(maxTag[2]) + ',' + str(minTag[2]) + ',偏差' + str(diffValue) + '度'
+
+
 
 
 

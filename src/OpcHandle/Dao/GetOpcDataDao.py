@@ -7,7 +7,6 @@ import  requests
 from src.Config.OpcConfig import OpcServer_API
 
 
-
 def GetDataFromOpc():
     """
     从OPC服务器获取 所有数据

@@ -13,4 +13,4 @@ TemperatureDifferenceRegion_2 = [#2机组
 ]
 
 
-DeviationThreshold = 100 #温差报警定值
+DeviationThreshold = 300 #温差报警定值

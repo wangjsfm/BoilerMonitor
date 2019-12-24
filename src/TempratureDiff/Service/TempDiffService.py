@@ -24,7 +24,7 @@ def DiffMonitorServer():
 def UnitMonitor(allOpcData,unit,areaList):
     """
     单台机组温差监控 处理
-    :param allOpcData:  所有OPC数据
+    :param allOpcData:  所有OPC数据r
     :param unit: 机组编号
     :param areaList: 所有监控区域  水冷壁分上、下两部分
     """
