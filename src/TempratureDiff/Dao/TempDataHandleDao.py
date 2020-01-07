@@ -54,18 +54,15 @@ def GetMaxMinData(areaOpcData):
     return maxValue,minvalue
 
 
-def RemoveCatch(region,unit):
+def RemoveCatch(region,unit,currentTeam):
     """
         报警结束，持久化缓存数据
     :param region:
+    currentTeam:当前值
     """
 
     area = region + unit
     get_catch_data = cache.get(area)
-
-    OPREATION_CLASSIC='1'
-    # if boilerUrls.OPREATION_CLASSIC == 0:
-    #     boilerUrls.OPREATION_CLASSIC = UpdataPeriodTeam()  # 更新OPREATION_CLASSIC
 
     if get_catch_data != None:
 
@@ -79,7 +76,7 @@ def RemoveCatch(region,unit):
             minTageName=get_catch_data['minTageName'],
             minTageDesc=get_catch_data['minTageDesc'],
             minTageValue=get_catch_data['minTageValue'],
-            classic=OPREATION_CLASSIC,
+            classic=currentTeam,
             deviationValuet = get_catch_data['diffValue'],
             beginTime= beginDate,
             endTime=endDate,
@@ -112,7 +109,7 @@ def updataCatch(maxTag,minTag,diffValue,redisData):
 
 
 
-def AlermDataCatchDao(maxTag,minTag,diffValue,region,unit,alermValue):
+def AlermDataCatchDao(maxTag,minTag,diffValue,region,unit,alermValue,currentTeam):
     """
         温差超限 存入redis
     :param maxTag:
@@ -147,7 +144,7 @@ def AlermDataCatchDao(maxTag,minTag,diffValue,region,unit,alermValue):
 
         if (diffValue < alermValue) & (get_diffValue_catch['state'] == 1): #上一刻报警，此刻没报警，将数据保存到数据库
             # 持久化
-            RemoveCatch(region, unit, )
+            RemoveCatch(region, unit,currentTeam )
             get_diffValue_catch['state'] = 0
 
         # 更新缓存信息
@@ -208,7 +205,7 @@ def AlermDataCatchDao(maxTag,minTag,diffValue,region,unit,alermValue):
 
 
 
-def OutOfGaugeHandleDao(maxTag,minTag,alermValue,partitionArea,unit):
+def OutOfGaugeHandleDao(maxTag,minTag,alermValue,partitionArea,unit,currentTeam):
     """
         温差超限处理
     :param maxTag: 最大值
@@ -216,11 +213,12 @@ def OutOfGaugeHandleDao(maxTag,minTag,alermValue,partitionArea,unit):
     :param alermValue:报警阀值
     :param partitionArea:数据所属区域
     :param unit: 机组
+    currentTeam:当前值
     """
     area = partitionArea + unit
     diffValue = round((maxTag[0]-minTag[0]),2) #最大值-最小值  获得温差
 
-    AlermDataCatchDao(maxTag,minTag,diffValue,partitionArea,unit,alermValue)
+    AlermDataCatchDao(maxTag,minTag,diffValue,partitionArea,unit,alermValue,currentTeam)
 
     get_diffValue_catch = cache.get(area)
 
@@ -228,7 +226,7 @@ def OutOfGaugeHandleDao(maxTag,minTag,alermValue,partitionArea,unit):
 
     if  diffValue < alermValue & get_diffValue_catch['state'] == dataState :#无报警，删除对于区域缓存数据，并将缓存数据存入数据库
             # 删除缓存及持久化
-        RemoveCatch(partitionArea, unit, )
+        RemoveCatch(partitionArea, unit, currentTeam)
     elif diffValue >= alermValue:
         # 生成报警信息
         alermTextContent = unit + str(maxTag[2]) + ',' + str(minTag[2]) + ',偏差' + str(diffValue) + '度'

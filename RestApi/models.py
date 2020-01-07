@@ -42,3 +42,19 @@ class DeviationAlermItem(models.Model):
 
 
 
+#换班
+class TeamRotation(models.Model):
+    #    1 白班  ，  2 晚班  ， 3 夜班
+    team_1 = models.CharField(db_column='team_1', max_length=10)# 1值
+    team_2 = models.CharField(db_column='team_2', max_length=10)  # 2值
+    team_3 = models.CharField(db_column='team_3', max_length=10)  # 3值
+    team_4 = models.CharField(db_column='team_4', max_length=10)  # 4值
+    team_5 = models.CharField(db_column='team_5', max_length=10)  # 5值
+    status = models.BooleanField(db_column='status')  # 正在上班时 为1 其余为 0
+    class Meta:
+        db_table = 'TeamRotation'
+
+
+
+
+

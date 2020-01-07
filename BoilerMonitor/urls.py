@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.conf.urls import include,url
-from src.TemperatureMonitor.Service.MainService import StartThread
+from src.Main.MainService import StartThread
 
 urlpatterns = [
     path('admin/', admin.site.urls),

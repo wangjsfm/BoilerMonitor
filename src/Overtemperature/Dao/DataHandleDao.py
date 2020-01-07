@@ -20,13 +20,13 @@ def  TemperEstimate(data,curveFun,presure,area,redisClient):
     :param area:  当前处理的区域
     :param redisClient:  redis客户端
     """
-    thresholdValue  = round(curveFun(presure),2)  #生成报警定值
-    alermValue = round(curveFun(presure,Coefficient),2) #根据报警系数 生成的定值
+    thresholdValue  =curveFun(presure)  #生成报警定值
+    alermValue = curveFun(presure,Coefficient) #根据报警系数 生成的定值
     # 从opc中获取 单条数据
-    for item in data:
+    for index,item in data:
         tagName = item[0]
-        tagDesc = item[2]
-        tagValue = round(float(item[1]), 2)
+        tagDesc = item[1]
+        tagValue = item[2]
 
         if tagValue < 0.01:  # 防止数据为负值
             tagValue = 0
@@ -42,7 +42,7 @@ def  TemperEstimate(data,curveFun,presure,area,redisClient):
 
 
 
-def DataAlermHandle(tagName, tagValue, tagDesc, alermValue,thresholdValue, redisClient):
+def DataAlermHandle(tagName, tagValue, tagDesc, alermValue, redisClient):
     """
         数据超过报警值，存入redis（超过记录定值不再一个实例）
     :param tagName:

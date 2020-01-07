@@ -8,6 +8,9 @@ from src.Config.TagGroupConfig import MainSteamPressure, \
     RearShaftWallTube51,LowTemperatureSuperheater,PlatenSuperheater45,\
     PlatenSuperheater51,HighTemperatureSuperheater45,HighTemperatureSuperheater51,\
     LowTemperatureReheater,HighTemperatureReheater
+from src.Tools.OpcHandle import GetPartitionData,PartitionDataHandle
+import  numpy as np
+
 
 
 
@@ -18,16 +21,28 @@ def GetSteamPressure(opcData,unit):
     :param unit:  机组名称
     :return:各个区域的压力
     """
-    # 选择后锅炉主蒸汽压力
+
+
     tempSteam = []
-    temp = MainSteamPressure+'_'+unit
-    MainSteam = float(opcData[MainSteamPressure+'_'+unit][0][1])
+
+    # 选择后锅炉主蒸汽压力
+
+    MainSteam = PartitionDataHandle(
+        GetPartitionData(MainSteamPressure + '_' + unit, opcData)
+    )[0][2]
+
     # 选择后高温再热器蒸汽压力
-    HighTemperatureReheaterSteam = float(opcData[HighTempReheaterSteam +'_'+unit][0][1])
+
+    HighTemperatureReheaterSteam = PartitionDataHandle(
+        GetPartitionData(HighTempReheaterSteam +'_'+unit,opcData)
+        )[0][2]
+
     #低温再热器进口联箱左侧进口压力(含左右侧两个点)
-    tempSteamPresure = opcData[LowTempReheatSteam+'_'+unit]
-    tempSteam.append(float(tempSteamPresure[0][1]))
-    tempSteam.append(float(tempSteamPresure[1][1]))
+    tempSteamPresure = PartitionDataHandle(
+        GetPartitionData(LowTempReheatSteam + '_' + unit, opcData)
+    )
+    tempSteam.append(tempSteamPresure[0][2])
+    tempSteam.append(tempSteamPresure[1][2])
     LowTempReheaterSteam = TwoInMiddle(tempSteam)
 
     return {
@@ -46,6 +61,15 @@ def GetSteamPressure(opcData,unit):
         LowTemperatureReheater+'_'+unit: LowTempReheaterSteam,
         HighTemperatureReheater+'_'+unit: HighTemperatureReheaterSteam,
     }
+
+
+
+
+
+
+
+
+
 
 
 def TwoInMiddle(tempData):
