@@ -39,3 +39,13 @@ def PartitionDataHandle(iterrowsData):
         tempList.append([tagName,tagDesc,tagValue])
     return  tempList
 
+
+
+if __name__ == '__main__':
+    areaName = 'PlatenSuperheater1'
+
+    opcData = GetDataFromOpc()
+    data= GetPartitionData(areaName,opcData)
+    pd_data = PartitionDataHandle(data)
+    print(pd_data)
+

@@ -31,9 +31,7 @@ def GetPartitionDataService(area,opc_real_data):
 
 if __name__ == '__main__':
     data = OpcAreaDataService()
-    data2 = data[LowTempReheatSteam+'_1']
-    f1 = float(data[LowTempReheatSteam+'_1'][0][1])
-    f2 = float(data[LowTempReheatSteam+'_1'][1][1])
-
-    print(type(float(f1)))
+    areaName = 'PlatenSuperheater1'
+    data1 = GetPartitionDataService(areaName,data).values.tolist()
+    print(data1)
 
