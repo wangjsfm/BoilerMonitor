@@ -12,8 +12,7 @@ def DiffMonitorServer():
     """
 
     team = GetCurrentTeam() #当前正在上班的值
-    print('job:', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-    print(team)
+
 
     AllOpcData = GetDataFromOpc()  # 获取所有OPC数据
 

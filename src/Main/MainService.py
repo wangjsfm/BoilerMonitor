@@ -8,9 +8,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from src.TempratureDiff.Service.TempDiffService import DiffMonitorServer
 from src.TeamRotation.TeamRotationDao import TeamRotatinoHandle
 from src.Overtemperature.Service.MonitorConfigService import MonitorAllUnit
+from src.AirPreheater.AirPreheaterService import AirPreaheaterMonit
 
 """
-    #1、#2机组壁温、温差报警监控
+    #1、#2机组监控配置
 """
 
 
@@ -41,6 +42,7 @@ def StartThread():
     # 采用固定时间间隔（interval）的方式，间隔时间到，执行任务
     scheduler.add_job(DiffMonitorServer, 'interval', seconds=TempDiffAlermCycl)  #温差监控任务
     scheduler.add_job(MonitorAllUnit, 'interval', seconds=OverTempCycl)  # 单点超温  监控任务
+    # scheduler.add_job(AirPreaheaterMonit, 'interval', seconds=OverTempCycl)  # 空预器超温
 
     # 采用定时（cron）的方式 定时执行任务
     scheduler.add_job(TeamRotatinoHandle, 'cron', hour='1', minute='59', second='59')  # 每天凌晨1：59:59更新每天应该上班的班组

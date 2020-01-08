@@ -55,6 +55,18 @@ class TeamRotation(models.Model):
         db_table = 'TeamRotation'
 
 
+class AirPreheater(models.Model):
+    name = models.CharField(db_column='name', max_length=100)#报警区域名
+    limitValue = models.DecimalField(db_column='limitValue', max_digits=18, decimal_places=4, blank=True, null=True)  # 极限值
+    classic = models.CharField(db_column='classic', max_length=50, blank=True, null=True)  # 值别
+    beginTime = models.DateTimeField(db_column='beginTime')#报警开始时间
+    endTime = models.DateTimeField(db_column='endTime')#报警结束时间
+    tiemDiff = models.DecimalField(db_column='tiemDiff', max_digits=18, decimal_places=4, blank=True, null=True)  # 报警时长
+
+    class Meta:
+        db_table = 'AirPreheater'
+
+
 
 
 

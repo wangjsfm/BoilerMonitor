@@ -108,12 +108,9 @@ def GetOpreationAseete(request):
 def GetAirPreheater(request):
     """
         返回空预器冷端温度  报警定值
-    :param req:
+    :param request:
     :return:
     """
-    # recive = json.loads(request.body)
-    # startTime = datetime.strptime(recive['startTime'], '%Y-%m-%d %X')
-    # endTime = datetime.strptime(recive['endTime'], '%Y-%m-%d %X')
     alermValue = None
     if request.method == 'GET':
         load =float( request.GET.get('load'))
